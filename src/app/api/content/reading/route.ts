@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getLessonByDay } from "@/data/curriculum";
+import { getLessonByDay } from "@/data/curriculum-loader";
 
 // DeepSeek or OpenAI-compatible endpoint
 const AI_API_KEY = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY || "";

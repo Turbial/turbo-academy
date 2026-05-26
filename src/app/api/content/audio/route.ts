@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getLessonByDay } from "@/data/curriculum";
+import { getLessonByDay } from "@/data/curriculum-loader";
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 const TTS_VOICE = process.env.TTS_VOICE || "nova"; // Nova: warm, natural female voice

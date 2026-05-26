@@ -3,7 +3,8 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { getLessonByDay, weeks, lessons } from "@/data/curriculum";
+import { getLessonByDay, getLessons, getWeeks } from "@/data/curriculum-loader";
+import { getBrand } from "@/config";
 
 const categoryColors: Record<string, string> = {
   "core-tools": "text-blue-400 bg-blue-500/10 border-blue-500/20",
@@ -20,9 +21,12 @@ const categoryLabels: Record<string, string> = {
 };
 
 export default function DayPageClient() {
+  const brand = getBrand();
   const params = useParams();
   const day = parseInt(params.id as string, 10);
   const lesson = getLessonByDay(day);
+  const allLessons = getLessons();
+  const allWeeks = getWeeks();
 
   const [readingContent, setReadingContent] = useState<string | null>(null);
   const [readingLoading, setReadingLoading] = useState(false);
@@ -41,7 +45,7 @@ export default function DayPageClient() {
     );
   }
 
-  const week = weeks[lesson.week - 1];
+  const week = allWeeks[lesson.week - 1];
   const prevLesson = day > 1 ? getLessonByDay(day - 1) : null;
   const nextLesson = day < 28 ? getLessonByDay(day + 1) : null;
 
@@ -130,15 +134,21 @@ export default function DayPageClient() {
           <p className="text-sm text-zinc-300 mt-1 font-medium">{week.title}</p>
         </div>
         <nav className="flex-1 p-2 space-y-0.5">
-          {lessons.map((l) => (
+          {allLessons.map((l) => (
             <Link
               key={l.day}
               href={`/day/${l.day}`}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors"
+              style={
                 l.day === day
-                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                  : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
-              }`}
+                  ? {
+                      backgroundColor: `${brand.accentHex}10`,
+                      color: brand.accentHex,
+                      borderColor: `${brand.accentHex}30`,
+                      border: "1px solid",
+                    }
+                  : {}
+              }
             >
               <span className="text-xs font-mono w-6 text-zinc-500">D{l.day}</span>
               <span className="truncate">{l.title}</span>
@@ -151,7 +161,7 @@ export default function DayPageClient() {
       <main className="flex-1 min-w-0">
         {/* Mobile header */}
         <div className="lg:hidden px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
-          <Link href="/" className="text-sm text-emerald-400">
+          <Link href="/" className="text-sm" style={{ color: brand.accentHex }}>
             ← Academy
           </Link>
           <span className="text-xs text-zinc-500">
@@ -162,8 +172,8 @@ export default function DayPageClient() {
         {/* Progress bar */}
         <div className="w-full bg-zinc-900 h-1">
           <div
-            className="bg-emerald-500 h-full transition-all"
-            style={{ width: `${(day / 28) * 100}%` }}
+            className="h-full transition-all"
+            style={{ backgroundColor: brand.accentHex, width: `${(day / 28) * 100}%` }}
           />
         </div>
 
@@ -172,7 +182,8 @@ export default function DayPageClient() {
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-3 flex-wrap">
               <span
-                className={`text-xs font-mono px-2 py-1 rounded border ${categoryColors[lesson.category]}`}
+                className="text-xs font-mono px-2 py-1 rounded border"
+              style={{ color: brand.accentHex, borderColor: `${brand.accentHex}30`, backgroundColor: `${brand.accentHex}08` }}
               >
                 {categoryLabels[lesson.category]}
               </span>
@@ -185,8 +196,8 @@ export default function DayPageClient() {
           </div>
 
           {/* Goal */}
-          <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-5 mb-8">
-            <h3 className="text-sm font-semibold text-emerald-400 mb-1">
+          <div className="rounded-xl p-5 mb-8 border" style={{ backgroundColor: `${brand.accentHex}05`, borderColor: `${brand.accentHex}20` }}>
+            <h3 className="text-sm font-semibold mb-1" style={{ color: brand.accentHex }}>
               Today&apos;s Goal
             </h3>
             <p className="text-zinc-300">{lesson.goal}</p>
@@ -200,7 +211,7 @@ export default function DayPageClient() {
             <ul className="space-y-2">
               {lesson.topics.map((t) => (
                 <li key={t} className="flex items-start gap-2 text-zinc-300">
-                  <span className="text-emerald-400 mt-1">•</span>
+                  <span className="mt-1" style={{ color: brand.accentHex }}>•</span>
                   {t}
                 </li>
               ))}
@@ -220,7 +231,8 @@ export default function DayPageClient() {
                 </p>
                 <button
                   onClick={generateReading}
-                  className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-medium rounded-lg transition-colors text-sm"
+                  className="px-6 py-2.5 text-black font-medium rounded-lg transition-colors text-sm hover:opacity-90"
+                  style={{ backgroundColor: brand.accentHex }}
                 >
                   Generate Reading Material
                 </button>
@@ -382,7 +394,7 @@ export default function DayPageClient() {
             <ul className="space-y-2">
               {lesson.deliverables.map((d, i) => (
                 <li key={i} className="flex items-start gap-2 text-zinc-300">
-                  <span className="text-emerald-400 mt-1">☐</span>
+                  <span className="mt-1" style={{ color: brand.accentHex }}>☐</span>
                   {d}
                 </li>
               ))}
@@ -441,7 +453,8 @@ export default function DayPageClient() {
             {nextLesson && (
               <Link
                 href={`/day/${nextLesson.day}`}
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-medium rounded-lg transition-colors text-sm"
+                className="flex items-center gap-2 px-4 py-2 text-black font-medium rounded-lg transition-colors text-sm hover:opacity-90"
+                style={{ backgroundColor: brand.accentHex }}
               >
                 Day {nextLesson.day} →
               </Link>
@@ -449,7 +462,8 @@ export default function DayPageClient() {
             {!nextLesson && (
               <Link
                 href="/complete"
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-medium rounded-lg transition-colors text-sm"
+                className="flex items-center gap-2 px-4 py-2 text-black font-medium rounded-lg transition-colors text-sm hover:opacity-90"
+                style={{ backgroundColor: brand.accentHex }}
               >
                 Complete Challenge 🎉
               </Link>

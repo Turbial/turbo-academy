@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
+import { getBrand, getBrandKey } from "@/config";
 import "./globals.css";
 
+const brand = getBrand();
+
 export const metadata: Metadata = {
-  title: "Turbo Academy — 28 Days to Become an AI Operator",
-  description: "Master AI tools, automate work, build workflows, and create AI-powered businesses. A 28-day challenge to transform from AI user to AI operator.",
+  title: `${brand.name} — 28 Days to Become an ${brand.challengeName}`,
+  description: brand.description,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

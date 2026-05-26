@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { getBrand } from "@/config";
+
+const brand = getBrand();
 
 const TOTAL_STEPS = 7;
 
@@ -85,7 +87,6 @@ export default function QuizPage() {
   const [answers, setAnswers] = useState<string[]>(Array(TOTAL_STEPS).fill(""));
   const [showSummary, setShowSummary] = useState(false);
   const [showMagic, setShowMagic] = useState(false);
-  const router = useRouter();
 
   const q = questions[step];
 
@@ -98,7 +99,6 @@ export default function QuizPage() {
       setStep(step + 1);
     } else {
       setShowMagic(true);
-      // Simulate the "creating your challenge" experience
       setTimeout(() => {
         setShowMagic(false);
         setShowSummary(true);
@@ -112,12 +112,21 @@ export default function QuizPage() {
       <div className="min-h-screen flex items-center justify-center px-6">
         <div className="max-w-md w-full text-center">
           <div className="mb-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+            <div
+              className="w-16 h-16 mx-auto mb-4 rounded-full border flex items-center justify-center"
+              style={{
+                backgroundColor: `${brand.accentHex}10`,
+                borderColor: `${brand.accentHex}30`,
+              }}
+            >
               <span className="text-2xl animate-pulse">⚙️</span>
             </div>
             <h2 className="text-xl font-semibold mb-2">Creating Your Personal Challenge...</h2>
             <div className="w-full bg-zinc-800 rounded-full h-1.5 mt-4 overflow-hidden">
-              <div className="bg-emerald-500 h-full rounded-full animate-pulse" style={{ width: "75%" }} />
+              <div
+                className="h-full rounded-full animate-pulse"
+                style={{ width: "75%", backgroundColor: brand.accentHex }}
+              />
             </div>
           </div>
           <p className="text-zinc-500 text-sm">
@@ -128,17 +137,18 @@ export default function QuizPage() {
     );
   }
 
-  // Summary page (after quiz)
+  // Summary page
   if (showSummary) {
+    const deadLine = new Date(Date.now() + 28 * 24 * 60 * 60 * 1000);
     return (
       <div className="min-h-screen flex items-center justify-center px-6 py-12">
         <div className="max-w-md w-full text-center">
           <div className="mb-8">
-            <span className="inline-block text-5xl mb-4">🎯</span>
+            <span className="text-5xl mb-4 inline-block">{brand.challengeEmoji}</span>
             <h2 className="text-2xl font-bold mb-3">Your Personal Summary</h2>
             <p className="text-zinc-400 mb-6">
               Based on your answers, you&apos;re ready to{" "}
-              <strong className="text-emerald-400">
+              <strong style={{ color: brand.accentHex }}>
                 {answers[2]?.toLowerCase() || "level up"}
               </strong>
               . Your current barrier is{" "}
@@ -162,33 +172,40 @@ export default function QuizPage() {
               </div>
               <div className="text-center p-4 rounded-xl border border-zinc-800 bg-zinc-900/50">
                 <div className="text-sm text-zinc-500 mb-1">Potential</div>
-                <div className="text-lg font-bold text-emerald-400">85%</div>
+                <div className="text-lg font-bold" style={{ color: brand.accentHex }}>
+                  85%
+                </div>
               </div>
             </div>
           </div>
 
           <div className="bg-zinc-900/30 rounded-xl border border-zinc-800 p-6 mb-8 text-left">
-            <h3 className="font-semibold text-emerald-400 mb-2">Your Personal 28-Day Challenge</h3>
+            <h3 className="font-semibold mb-2" style={{ color: brand.accentHex }}>
+              Your Personal {brand.quizTitle}
+            </h3>
             <p className="text-zinc-400 text-sm mb-4">
-              We expect you to complete the AI Operator certification by{" "}
+              We expect you to complete the {brand.challengeName} certification by{" "}
               <strong className="text-zinc-200">
-                {new Date(Date.now() + 28 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}
+                {deadLine.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
               </strong>
             </p>
             <ul className="text-sm text-zinc-400 space-y-1">
-              <li>• Daily time commitment: <strong className="text-zinc-200">{answers[3] || "15 min"}</strong></li>
-              <li>• Learning style: <strong className="text-zinc-200">{answers[5] || "Varied"}</strong></li>
-              <li>• Motivation: <strong className="text-zinc-200">{answers[6] || "Building something real"}</strong></li>
+              <li>
+                • Daily time commitment: <strong className="text-zinc-200">{answers[3] || "15 min"}</strong>
+              </li>
+              <li>
+                • Learning style: <strong className="text-zinc-200">{answers[5] || "Varied"}</strong>
+              </li>
+              <li>
+                • Motivation: <strong className="text-zinc-200">{answers[6] || "Building something real"}</strong>
+              </li>
             </ul>
           </div>
 
           <Link
             href="/day/1"
-            className="inline-block px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold rounded-xl transition-colors text-lg"
+            className="inline-block px-8 py-4 text-black font-semibold rounded-xl transition-colors text-lg hover:opacity-90"
+            style={{ backgroundColor: brand.accentHex }}
           >
             Start Day 1 →
           </Link>
@@ -200,7 +217,6 @@ export default function QuizPage() {
   // Quiz question
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
       <div className="px-6 py-4 flex items-center justify-between border-b border-zinc-800">
         <Link href="/" className="text-zinc-500 hover:text-zinc-300 transition-colors">
           ← Back
@@ -208,18 +224,19 @@ export default function QuizPage() {
         <div className="text-sm text-zinc-500">
           {step + 1} / {TOTAL_STEPS}
         </div>
-        <div className="w-16" /> {/* spacer */}
+        <div className="w-16" />
       </div>
 
-      {/* Progress bar */}
       <div className="w-full bg-zinc-900 h-1">
         <div
-          className="bg-emerald-500 h-full transition-all duration-300"
-          style={{ width: `${((step + 1) / TOTAL_STEPS) * 100}%` }}
+          className="h-full transition-all duration-300"
+          style={{
+            width: `${((step + 1) / TOTAL_STEPS) * 100}%`,
+            backgroundColor: brand.accentHex,
+          }}
         />
       </div>
 
-      {/* Question */}
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="max-w-lg w-full">
           <h2 className="text-2xl md:text-3xl font-bold mb-2">{q.title}</h2>
@@ -229,7 +246,8 @@ export default function QuizPage() {
               <button
                 key={opt.label}
                 onClick={() => handleSelect(opt.label)}
-                className="w-full text-left p-4 rounded-xl border border-zinc-700 hover:border-emerald-500/50 hover:bg-zinc-800/50 transition-all flex items-center gap-3 group"
+                className="w-full text-left p-4 rounded-xl border border-zinc-700 hover:bg-zinc-800/50 transition-all flex items-center gap-3 group"
+                style={{ borderColor: "rgb(63 63 70)" }}
               >
                 <span className="text-xl">{opt.icon}</span>
                 <span className="text-zinc-200 group-hover:text-white">{opt.label}</span>
