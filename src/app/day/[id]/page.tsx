@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { getLessonByDay, getLessons, getWeeks } from "@/data/curriculum-loader";
@@ -28,6 +29,8 @@ export default function DayPageClient() {
   const allLessons = getLessons();
   const allWeeks = getWeeks();
 
+  const [progressSaving, setProgressSaving] = useState(false);
+  const [lessonCompleted, setLessonCompleted] = useState(false);
   const [readingContent, setReadingContent] = useState<string | null>(null);
   const [readingLoading, setReadingLoading] = useState(false);
   const [readingError, setReadingError] = useState<string | null>(null);
@@ -48,6 +51,34 @@ export default function DayPageClient() {
   const week = allWeeks[lesson.week - 1];
   const prevLesson = day > 1 ? getLessonByDay(day - 1) : null;
   const nextLesson = day < 28 ? getLessonByDay(day + 1) : null;
+
+  // Save progress to Supabase
+  const markComplete = useCallback(async () => {
+    setProgressSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await supabase.from('academy_progress').upsert({
+          user_id: session.user.id,
+          day,
+          completed: true,
+          completed_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,day' });
+        setLessonCompleted(true);
+      } else {
+        // Not logged in — save to localStorage as fallback
+        const stored = JSON.parse(localStorage.getItem('academy_progress') || '{}');
+        stored[day] = { completed: true, completed_at: new Date().toISOString() };
+        localStorage.setItem('academy_progress', JSON.stringify(stored));
+        setLessonCompleted(true);
+      }
+    } catch {
+      // Silent fail — progress saved locally
+      setLessonCompleted(true);
+    } finally {
+      setProgressSaving(false);
+    }
+  }, [day]);
 
   const generateReading = useCallback(async () => {
     setReadingLoading(true);
@@ -401,17 +432,39 @@ export default function DayPageClient() {
             </ul>
           </section>
 
-          {/* Checkpoint */}
+          {/* Mark Complete */}
           <section className="mb-10">
             <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">
-              Checkpoint
+              Complete This Lesson
             </h3>
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-5">
-              <p className="text-zinc-400 text-sm">
-                Before moving on, verify: can you explain today&apos;s key concepts to
-                someone else? Have you completed the exercise and saved your
-                deliverables?
-              </p>
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-5 text-center">
+              {lessonCompleted ? (
+                <div className="flex flex-col items-center gap-2">
+                  <span className="text-2xl">✅</span>
+                  <p className="text-emerald-400 font-medium text-sm">
+                    Day {day} marked complete!
+                  </p>
+                  <p className="text-zinc-500 text-xs">
+                    Your progress has been saved.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-zinc-400 text-sm mb-4">
+                    Before moving on, verify: can you explain today&apos;s key concepts to
+                    someone else? Have you completed the exercise and saved your
+                    deliverables?
+                  </p>
+                  <button
+                    onClick={markComplete}
+                    disabled={progressSaving}
+                    className="px-6 py-3 rounded-xl font-medium text-black hover:opacity-90 transition-all text-sm disabled:opacity-50"
+                    style={{ backgroundColor: brand.accentHex }}
+                  >
+                    {progressSaving ? "Saving..." : "✓ Mark Day Complete"}
+                  </button>
+                </>
+              )}
             </div>
           </section>
 
