@@ -1,16 +1,6 @@
 -- Migration: Turbo Academy content storage
 -- Stores AI-generated reading material and TTS audio per lesson
-
-create table if not exists academy_content (
-  id bigint generated always as identity primary key,
-  day integer not null unique references academy_lessons(day) on delete cascade,
-  reading_content text,
-  reading_generated_at timestamptz,
-  audio_url text,
-  audio_generated_at timestamptz,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
+-- ORDER MATTERS: academy_lessons must exist before academy_content references it
 
 -- Reference table for lessons (mirrors curriculum data)
 create table if not exists academy_lessons (
@@ -26,6 +16,18 @@ create table if not exists academy_lessons (
   audio_prompt text,
   category text not null,
   created_at timestamptz default now()
+);
+
+-- Table for AI-generated content (reading material + TTS audio)
+create table if not exists academy_content (
+  id bigint generated always as identity primary key,
+  day integer not null unique references academy_lessons(day) on delete cascade,
+  reading_content text,
+  reading_generated_at timestamptz,
+  audio_url text,
+  audio_generated_at timestamptz,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
 );
 
 -- User progress tracking
@@ -49,6 +51,21 @@ create table if not exists academy_achievements (
   unique(user_id, achievement_type)
 );
 
--- Indexes
-create index if not exists idx_academy_progress_user on academy_progress(user_id);
-create index if not exists idx_academy_content_day on academy_content(day);
+-- RLS policies
+alter table academy_lessons enable row level security;
+alter table academy_content enable row level security;
+alter table academy_progress enable row level security;
+alter table academy_achievements enable row level security;
+
+-- Allow public read of lessons and content
+create policy "public read lessons" on academy_lessons for select using (true);
+create policy "public read content" on academy_content for select using (true);
+
+-- Users can read/write their own progress
+create policy "own progress sel" on academy_progress for select using (auth.uid()::text = user_id);
+create policy "own progress ins" on academy_progress for insert with check (auth.uid()::text = user_id);
+create policy "own progress upd" on academy_progress for update using (auth.uid()::text = user_id);
+
+-- Users can read/write their own achievements
+create policy "own achievements sel" on academy_achievements for select using (auth.uid()::text = user_id);
+create policy "own achievements ins" on academy_achievements for insert with check (auth.uid()::text = user_id);
